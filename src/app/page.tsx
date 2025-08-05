@@ -1,103 +1,189 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import { tradingApi, Trade } from "@/lib/api";
+import { TrendingUp, TrendingDown, DollarSign, Activity } from "lucide-react";
+
+export default function Dashboard() {
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchRecentTrades();
+  }, []);
+
+  const fetchRecentTrades = async () => {
+    try {
+      const response = await tradingApi.getRecentTrades(10);
+      setTrades(response.data);
+    } catch (err) {
+      setError(
+        "Failed to fetch trades. Make sure your backend is running on localhost:8000"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stats = {
+    totalTrades: trades.length,
+    longTrades: trades.filter((t) => t.side === "long").length,
+    shortTrades: trades.filter((t) => t.side === "short").length,
+    totalVolume: trades.reduce(
+      (sum, t) => sum + parseFloat(t.size) * parseFloat(t.price),
+      0
+    ),
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Trading Dashboard</h1>
+        <p className="text-gray-400">
+          Monitor your crypto derivatives positions
+        </p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Trades</p>
+              <p className="text-2xl font-bold">{stats.totalTrades}</p>
+            </div>
+            <Activity className="w-8 h-8 text-blue-400" />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Long Positions</p>
+              <p className="text-2xl font-bold text-green-400">
+                {stats.longTrades}
+              </p>
+            </div>
+            <TrendingUp className="w-8 h-8 text-green-400" />
+          </div>
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Short Positions</p>
+              <p className="text-2xl font-bold text-red-400">
+                {stats.shortTrades}
+              </p>
+            </div>
+            <TrendingDown className="w-8 h-8 text-red-400" />
+          </div>
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Volume</p>
+              <p className="text-2xl font-bold">
+                ${stats.totalVolume.toLocaleString()}
+              </p>
+            </div>
+            <DollarSign className="w-8 h-8 text-yellow-400" />
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Trades */}
+      <div className="bg-gray-800 rounded-lg border border-gray-700">
+        <div className="p-6 border-b border-gray-700">
+          <h2 className="text-xl font-semibold">Recent Trades</h2>
+        </div>
+
+        {loading ? (
+          <div className="p-6 text-center">
+            <p className="text-gray-400">Loading trades...</p>
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center">
+            <p className="text-red-400">{error}</p>
+            <button
+              onClick={fetchRecentTrades}
+              className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : trades.length === 0 ? (
+          <div className="p-6 text-center">
+            <p className="text-gray-400">
+              No trades yet. Create your first trade!
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Symbol
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Side
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Size
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Leverage
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {trades.map((trade) => (
+                  <tr key={trade.id} className="hover:bg-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium">
+                      {trade.symbol}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          trade.side === "long"
+                            ? "bg-green-900 text-green-300"
+                            : "bg-red-900 text-red-300"
+                        }`}
+                      >
+                        {trade.side.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">
+                      {parseFloat(trade.size).toFixed(4)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">
+                      ${parseFloat(trade.price).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-300">
+                      {trade.leverage}x
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-900 text-green-300">
+                        {trade.status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
